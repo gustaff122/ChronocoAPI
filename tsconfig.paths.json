@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@chronoco/*": [
+        "./*"
+      ],
+      "@chronoco/decorators/*": [
+        "src/decorators/*"
+      ],
+      "@chronoco/entities/*": [
+        "src/entities/*"
+      ],
+      "@chronoco/modules/*": [
+        "src/modules/*"
+      ],
+      "@chronoco/validators/*": [
+        "src/validators/*"
+      ]
+    }
+  }
+}
