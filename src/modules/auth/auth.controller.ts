@@ -55,11 +55,36 @@ export class AuthController {
     return this.authService.findOneByIdWithoutPassword(userId);
   }
 
+  @Post('refresh')
+  @ApiOkResponse({ description: 'Access token refreshed.', type: UserResponse })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  public async refresh(
+    @Req() req: IRequest,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<UserResponse> {
+    const accessToken = req?.cookies?.['access_token'];
+    const { user, accessToken: newAccessToken } = await this.authService.refreshAccessToken(accessToken);
+
+    res.cookie('access_token', newAccessToken, {
+      httpOnly: true,
+      secure: process.env['HTTPS_COOKIES_SECURE'] === 'true',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 3,
+    });
+
+    return user;
+  }
+
   @Delete('logout')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'User logged out successfully.' })
-  public async logout(@Res({ passthrough: true }) res: Response): Promise<void> {
+  public async logout(@Req() req: IRequest, @Res({ passthrough: true }) res: Response): Promise<void> {
+    const userId = req?.user['id'];
+    if (userId) {
+      await this.authService.revokeRefreshToken(userId);
+    }
+
     res.clearCookie('access_token', {
       httpOnly: true,
       secure: process.env['HTTPS_COOKIES_SECURE'] === 'true',

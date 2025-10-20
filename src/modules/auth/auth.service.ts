@@ -7,6 +7,7 @@ import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { UserResponse } from './models/user-response';
 
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 @Injectable()
 export class AuthService {
@@ -47,6 +48,14 @@ export class AuthService {
     const payload = { id: user.id, name: user.name, login: user.login, selectedEvent: user?.selectedEvent?.id || null };
     const accessToken = this.jwtService.sign(payload);
 
+    const refreshTokenPlain = crypto.randomBytes(48).toString('hex');
+    const refreshTokenHash = await bcrypt.hash(refreshTokenPlain, 10);
+    const refreshTokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
+
+    user.refreshTokenHash = refreshTokenHash;
+    user.refreshTokenExpiresAt = refreshTokenExpiresAt;
+    await this.usersRepository.save(user);
+
     return { accessToken, user: payload };
   }
 
@@ -57,6 +66,52 @@ export class AuthService {
     }
 
     return null;
+  }
+
+  public async revokeRefreshToken(userId: string): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      return;
+    }
+    user.refreshTokenHash = null;
+    user.refreshTokenExpiresAt = null;
+    await this.usersRepository.save(user);
+  }
+
+  public async refreshAccessToken(accessToken: string | undefined): Promise<{ user: UserResponse, accessToken: string }> {
+    if (!accessToken) {
+      throw new UnauthorizedException('Missing access token');
+    }
+
+    let decoded: any;
+    try {
+      decoded = this.jwtService.verify(accessToken, { ignoreExpiration: true, secret: process.env['JWT_SECRET'] });
+    } catch (e) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    const user = await this.findOneById(decoded.id);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.refreshTokenHash || !user.refreshTokenExpiresAt) {
+      throw new UnauthorizedException('Refresh token not set');
+    }
+
+    if (user.refreshTokenExpiresAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    const payload: UserResponse = {
+      id: user.id,
+      name: user.name,
+      login: user.login,
+      selectedEvent: user?.selectedEvent?.id || null,
+    };
+    const newAccessToken = this.jwtService.sign(payload);
+
+    return { user: payload, accessToken: newAccessToken };
   }
 
   public async findOneById(id: string): Promise<Users> {

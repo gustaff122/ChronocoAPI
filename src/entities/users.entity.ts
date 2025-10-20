@@ -20,6 +20,12 @@ export class Users {
   @JoinColumn()
   selectedEvent: Events;
 
+  @Column({ type: 'varchar', length: 256, nullable: true })
+  refreshTokenHash: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  refreshTokenExpiresAt: Date | null;
+
   @BeforeInsert()
   generateId() {
     this.id = ulid();
