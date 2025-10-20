@@ -1,9 +1,9 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Users } from '@chronoco/entities/users.entity';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { ChangePasswordDto, LoginDto } from './dto/auth.dto';
 import { UserResponse } from './models/user-response';
 
 const bcrypt = require('bcrypt');
@@ -17,25 +17,7 @@ export class AuthService {
   ) {
   }
 
-  public async register(registerDto: RegisterDto): Promise<UserResponse> {
-    const { login, password, name } = registerDto;
-
-    const existingUser = await this.usersRepository.findOne({ where: { login } });
-
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = this.usersRepository.create({
-      name,
-      login,
-      password: hashedPassword,
-    });
-
-    await this.usersRepository.save(user);
-    return { id: user.id, login, name, selectedEvent: null };
-  }
+  // Publiczna rejestracja wyłączona zgodnie z wytycznymi – obsłużona w UsersController dla SUPERADMIN
 
   public async login(loginDto: LoginDto): Promise<{ user: UserResponse, accessToken: string }> {
     const { login, password } = loginDto;
@@ -45,7 +27,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { id: user.id, name: user.name, login: user.login, selectedEvent: user?.selectedEvent?.id || null };
+    const payload = { id: user.id, name: user.name, login: user.login, role: user.role, selectedEvent: user?.selectedEvent?.id || null };
     const accessToken = this.jwtService.sign(payload);
 
     const refreshTokenPlain = crypto.randomBytes(48).toString('hex');
@@ -78,6 +60,19 @@ export class AuthService {
     await this.usersRepository.save(user);
   }
 
+  public async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const isValid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid current password');
+    }
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.usersRepository.save(user);
+  }
+
   public async refreshAccessToken(accessToken: string | undefined): Promise<{ user: UserResponse, accessToken: string }> {
     if (!accessToken) {
       throw new UnauthorizedException('Missing access token');
@@ -107,6 +102,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       login: user.login,
+      role: user.role,
       selectedEvent: user?.selectedEvent?.id || null,
     };
     const newAccessToken = this.jwtService.sign(payload);

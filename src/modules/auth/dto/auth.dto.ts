@@ -1,5 +1,6 @@
-import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRole } from '@chronoco/entities/users.entity';
 
 export class RegisterDto {
   @ApiProperty()
@@ -19,6 +20,10 @@ export class RegisterDto {
   @MinLength(6)
   @MaxLength(64)
   password: string;
+
+  @ApiProperty({ enum: UserRole, required: false })
+  @IsEnum(UserRole)
+  role?: UserRole;
 }
 
 export class LoginDto {
@@ -33,4 +38,18 @@ export class LoginDto {
   @MinLength(6)
   @MaxLength(64)
   password: string;
+}
+
+export class ChangePasswordDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(64)
+  currentPassword: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(64)
+  newPassword: string;
 }

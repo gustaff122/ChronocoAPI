@@ -10,6 +10,9 @@ export class UserResponse {
   @ApiProperty({ example: 'jankowalski', description: 'Login or email' })
   login: string;
 
+  @ApiProperty({ example: 'SUPERADMIN', description: 'User role' })
+  role: string;
+
   @ApiProperty({ example: '213', description: 'Id of selected event' })
   selectedEvent: string;
 }

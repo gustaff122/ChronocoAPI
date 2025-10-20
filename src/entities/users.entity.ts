@@ -1,6 +1,11 @@
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { BeforeInsert, Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryColumn } from 'typeorm';
 import { ulid } from 'ulid';
 import { Events } from './events.entity';
+
+export enum UserRole {
+  SUPERADMIN = 'SUPERADMIN',
+  USER = 'USER',
+}
 
 @Entity()
 export class Users {
@@ -16,9 +21,16 @@ export class Users {
   @Column({ length: 128 })
   password: string;
 
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
+
   @ManyToOne(() => Events)
   @JoinColumn()
   selectedEvent: Events;
+
+  @ManyToMany(() => Events)
+  @JoinTable({ name: 'users_events_access' })
+  accessibleEvents: Events[];
 
   @Column({ type: 'varchar', length: 256, nullable: true })
   refreshTokenHash: string | null;

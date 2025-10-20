@@ -50,11 +50,16 @@ export class EventsService {
   }
 
   public async selectEvent(userId: string, eventId: string): Promise<void> {
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const user = await this.usersRepository.findOne({ where: { id: userId }, relations: [ 'accessibleEvents' ] });
     if (!user) throw new NotFoundException('User not found');
 
     const event = await this.eventsRepository.findOne({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
+
+    const hasAccess = Array.isArray(user.accessibleEvents) && user.accessibleEvents.some(e => e.id === event.id);
+    if (!hasAccess) {
+      throw new NotFoundException('Event not accessible for this user');
+    }
 
     user.selectedEvent = event;
     await this.usersRepository.save(user);

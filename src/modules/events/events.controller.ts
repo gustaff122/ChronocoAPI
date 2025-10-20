@@ -6,6 +6,8 @@ import { Events } from '../../entities/events.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IRequest } from '../../models/i-request';
 import { SelectEventDto } from './dto/select-event.dto';
+import { Roles } from '../auth/guards/roles.guard';
+import { UserRole } from '../../entities/users.entity';
 
 @ApiTags('Events')
 @Controller('events')
@@ -14,6 +16,9 @@ export class EventsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.SUPERADMIN)
   @ApiOperation({ summary: 'Create new event' })
   @ApiResponse({ status: 201, description: 'Event created', type: Events })
   public async create(@Body() dto: CreateEventDto): Promise<Events> {
@@ -35,6 +40,9 @@ export class EventsController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.SUPERADMIN)
   @ApiOperation({ summary: 'Update event by ID' })
   @ApiResponse({ status: 200, description: 'Event updated', type: Events })
   public async update(@Param('id') id: string, @Body() dto: UpdateEventDto): Promise<Events> {
@@ -42,6 +50,9 @@ export class EventsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.SUPERADMIN)
   @ApiOperation({ summary: 'Delete event by ID' })
   @ApiResponse({ status: 204, description: 'Event deleted' })
   public async remove(@Param('id') id: string): Promise<void> {

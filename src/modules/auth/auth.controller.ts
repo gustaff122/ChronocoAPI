@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { ChangePasswordDto, LoginDto } from './dto/auth.dto';
 import { UserResponse } from './models/user-response';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IRequest } from '../../models/i-request';
@@ -13,13 +13,7 @@ export class AuthController {
   constructor(private authService: AuthService) {
   }
 
-  @Post('register')
-  @ApiBody({ type: RegisterDto })
-  @ApiResponse({ status: 201, description: 'User created successfully.' })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  public async register(@Body() registerDto: RegisterDto): Promise<UserResponse> {
-    return this.authService.register(registerDto);
-  }
+  // Publiczna rejestracja wyłączona zgodnie z wytycznymi
 
 
   @Post('login')
@@ -90,5 +84,18 @@ export class AuthController {
       secure: process.env['HTTPS_COOKIES_SECURE'] === 'true',
       sameSite: 'lax',
     });
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({ status: 200, description: 'Password changed successfully.' })
+  public async changePassword(
+    @Req() req: IRequest,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<void> {
+    const userId = req?.user['id'];
+    await this.authService.changePassword(userId, dto);
   }
 }
