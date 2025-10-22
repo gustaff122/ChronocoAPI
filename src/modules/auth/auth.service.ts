@@ -7,7 +7,6 @@ import { ChangePasswordDto, LoginDto } from './dto/auth.dto';
 import { UserResponse } from './models/user-response';
 
 const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 
 @Injectable()
 export class AuthService {
@@ -30,11 +29,8 @@ export class AuthService {
     const payload = { id: user.id, name: user.name, login: user.login, role: user.role, selectedEvent: user?.selectedEvent?.id || null };
     const accessToken = this.jwtService.sign(payload);
 
-    const refreshTokenPlain = crypto.randomBytes(48).toString('hex');
-    const refreshTokenHash = await bcrypt.hash(refreshTokenPlain, 10);
     const refreshTokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
 
-    user.refreshTokenHash = refreshTokenHash;
     user.refreshTokenExpiresAt = refreshTokenExpiresAt;
     await this.usersRepository.save(user);
 
@@ -55,7 +51,6 @@ export class AuthService {
     if (!user) {
       return;
     }
-    user.refreshTokenHash = null;
     user.refreshTokenExpiresAt = null;
     await this.usersRepository.save(user);
   }
@@ -90,7 +85,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    if (!user.refreshTokenHash || !user.refreshTokenExpiresAt) {
+    if (!user.refreshTokenExpiresAt) {
       throw new UnauthorizedException('Refresh token not set');
     }
 

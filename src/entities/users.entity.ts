@@ -32,9 +32,6 @@ export class Users {
   @JoinTable({ name: 'users_events_access' })
   accessibleEvents: Events[];
 
-  @Column({ type: 'varchar', length: 256, nullable: true })
-  refreshTokenHash: string | null;
-
   @Column({ type: 'timestamp', nullable: true })
   refreshTokenExpiresAt: Date | null;
 
