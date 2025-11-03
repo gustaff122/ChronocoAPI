@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Users } from '@chronoco/entities/users.entity';
-import { ChangePasswordDto, LoginDto } from './dto/auth.dto';
+import { ChangePasswordDto, LoginDto, ResetPasswordDto } from './dto/auth.dto';
 import { UserResponse } from './models/user-response';
 
 const bcrypt = require('bcrypt');
@@ -63,6 +63,19 @@ export class AuthService {
     const isValid = await bcrypt.compare(dto.currentPassword, user.password);
     if (!isValid) {
       throw new UnauthorizedException('Invalid current password');
+    }
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.usersRepository.save(user);
+  }
+
+  public async resetPassword(userId: string, dto: ResetPasswordDto): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const isValid = await bcrypt.compare(dto.oldPassword, user.password);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid old password');
     }
     user.password = await bcrypt.hash(dto.newPassword, 10);
     await this.usersRepository.save(user);

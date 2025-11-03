@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, LoginDto } from './dto/auth.dto';
+import { ChangePasswordDto, LoginDto, ResetPasswordDto } from './dto/auth.dto';
 import { UserResponse } from './models/user-response';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IRequest } from '../../models/i-request';
@@ -92,5 +92,19 @@ export class AuthController {
   ): Promise<void> {
     const userId = req?.user['id'];
     await this.authService.changePassword(userId, dto);
+  }
+
+  @Post('reset-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+  @ApiResponse({ status: 401, description: 'Invalid old password.' })
+  public async resetPassword(
+    @Req() req: IRequest,
+    @Body() dto: ResetPasswordDto,
+  ): Promise<void> {
+    const userId = req?.user['id'];
+    await this.authService.resetPassword(userId, dto);
   }
 }

@@ -53,3 +53,17 @@ export class ChangePasswordDto {
   @MaxLength(64)
   newPassword: string;
 }
+
+export class ResetPasswordDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(64)
+  oldPassword: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(64)
+  newPassword: string;
+}
