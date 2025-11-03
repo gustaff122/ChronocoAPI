@@ -15,7 +15,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         httpOnly: true,
         secure: process.env['HTTPS_COOKIES_SECURE'] === 'true',
         sameSite: 'lax',
-        maxAge: 1000 * 60 * 60 * 3,
+        maxAge: 1000 * 60 * 30,
       });
     }
     return result;

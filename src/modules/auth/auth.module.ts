@@ -19,7 +19,7 @@ import { AuthSeedService } from './auth.seed';
       imports: [ ConfigModule ],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '3600s' },
+        signOptions: { expiresIn: '1800s' },
       }),
       inject: [ ConfigService ],
     }),
