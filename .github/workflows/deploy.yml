@@ -64,4 +64,4 @@ jobs:
             cd /home/kakkoii/apps/chronoco-backend
             npm install --omit=dev --force
             pm2 delete CHRONOCO_API || true
-            pm2 start main.js --name CHRONOCO_API
+            pm2 start dist/main.js --name CHRONOCO_API
