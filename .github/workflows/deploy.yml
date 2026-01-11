@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -25,18 +24,20 @@ jobs:
       - name: Build API
         run: npm run build
 
-      - name: Upload API build
+      - name: Copy package files into dist
+        run: |
+          cp package.json dist/
+          cp package-lock.json dist/
+
+      - name: Upload API build (dist with package files)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.MIKRUS_HOST }}
           username: ${{ secrets.MIKRUS_USER }}
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_PORT }}
-          source: |
-            dist/*
-            package.json
-            package-lock.json
-          target: "/home/kakkoii/apps/chronoco-backend"
+          source: dist
+          target: /home/kakkoii/apps/chronoco-backend
 
       - name: Create .env on server
         uses: appleboy/ssh-action@v1.0.0
@@ -46,7 +47,7 @@ jobs:
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_PORT }}
           script: |
-            cd /home/kakkoii/apps/chronoco-backend
+            cd /home/kakkoii/apps/chronoco-backend/dist
             cat <<EOF > .env
             DB_HOST=${{ secrets.DB_HOST }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
@@ -64,7 +65,7 @@ jobs:
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_PORT }}
           script: |
-            cd /home/kakkoii/apps/chronoco-backend
-            npm install --omit=dev --force
+            cd /home/kakkoii/apps/chronoco-backend/dist
+            npm install --omit=dev
             pm2 delete CHRONOCO_API || true
-            pm2 start dist/main.js --name CHRONOCO_API
+            pm2 start main.js --name CHRONOCO_API
