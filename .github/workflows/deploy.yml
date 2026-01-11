@@ -25,14 +25,17 @@ jobs:
       - name: Build API
         run: npm run build
 
-      - name: Upload API build
+      - name: Upload API build + package files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.MIKRUS_HOST }}
           username: ${{ secrets.MIKRUS_USER }}
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_PORT }}
-          source: "dist/*"
+          source: |
+            dist/*
+            package.json
+            package-lock.json
           target: "/home/kakkoii/apps/chronoco-backend"
 
       - name: Create .env on server
@@ -62,6 +65,6 @@ jobs:
           port: ${{ secrets.MIKRUS_PORT }}
           script: |
             cd /home/kakkoii/apps/chronoco-backend
-            npm install --omit=dev --force
+            npm ci --omit=dev
             pm2 delete CHRONOCO_API || true
             pm2 start dist/main.js --name CHRONOCO_API
