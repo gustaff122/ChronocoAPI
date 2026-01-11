@@ -73,7 +73,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'User logged out successfully.' })
-  public async logout(@Req() req: IRequest, @Res({ passthrough: true }) res: Response): Promise<void> {
+  public async logout(@Res({ passthrough: true }) res: Response): Promise<void> {
     res.clearCookie('access_token', {
       httpOnly: true,
       secure: process.env['HTTPS_COOKIES_SECURE'] === 'true',

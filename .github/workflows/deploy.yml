@@ -1,0 +1,67 @@
+name: Deploy API (NestJS) to Mikrus
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build API
+        run: npm run build
+
+      - name: Upload API build
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.MIKRUS_HOST }}
+          username: ${{ secrets.MIKRUS_USER }}
+          key: ${{ secrets.MIKRUS_SSH_KEY }}
+          port: ${{ secrets.MIKRUS_PORT }}
+          source: "dist/*"
+          target: "/home/kakkoii/apps/chronoco-backend"
+
+      - name: Create .env on server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.MIKRUS_HOST }}
+          username: ${{ secrets.MIKRUS_USER }}
+          key: ${{ secrets.MIKRUS_SSH_KEY }}
+          port: ${{ secrets.MIKRUS_PORT }}
+          script: |
+            cd /home/kakkoii/apps/chronoco-backend
+            cat <<EOF > .env
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_DATABASE=${{ secrets.DB_DATABASE }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            HTTPS_COOKIES_SECURE=${{ secrets.HTTPS_COOKIES_SECURE }}
+            EOF
+
+      - name: Install prod deps & restart PM2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.MIKRUS_HOST }}
+          username: ${{ secrets.MIKRUS_USER }}
+          key: ${{ secrets.MIKRUS_SSH_KEY }}
+          port: ${{ secrets.MIKRUS_PORT }}
+          script: |
+            cd /home/kakkoii/apps/chronoco-backend
+            npm install --omit=dev --force
+            pm2 delete CHRONOCO_API || true
+            pm2 start main.js --name CHRONOCO_API
