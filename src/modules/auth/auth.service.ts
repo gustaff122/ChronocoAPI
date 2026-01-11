@@ -16,8 +16,6 @@ export class AuthService {
   ) {
   }
 
-  // Publiczna rejestracja wyłączona zgodnie z wytycznymi – obsłużona w UsersController dla SUPERADMIN
-
   public async login(loginDto: LoginDto): Promise<{ user: UserResponse, accessToken: string }> {
     const { login, password } = loginDto;
 
@@ -29,9 +27,7 @@ export class AuthService {
     const payload = { id: user.id, name: user.name, login: user.login, role: user.role, selectedEvent: user?.selectedEvent?.id || null };
     const accessToken = this.jwtService.sign(payload);
 
-    const refreshTokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
-
-    user.refreshTokenExpiresAt = refreshTokenExpiresAt;
+    user.refreshTokenExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
     await this.usersRepository.save(user);
 
     return { accessToken, user: payload };

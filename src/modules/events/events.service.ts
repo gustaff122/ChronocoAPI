@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateEventDto, UpdateEventDto } from './dto/create-update-event.dto';
 import { Events } from '../../entities/events.entity';
-import { Users } from '../../entities/users.entity';
+import { UserRole, Users } from '../../entities/users.entity';
 import { EventPlanners } from '../../entities/event-planners.entity';
 
 @Injectable()
@@ -49,14 +49,14 @@ export class EventsService {
     await this.eventsRepository.remove(event);
   }
 
-  public async selectEvent(userId: string, eventId: string): Promise<void> {
+  public async selectEvent(role: string, userId: string, eventId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId }, relations: [ 'accessibleEvents' ] });
     if (!user) throw new NotFoundException('User not found');
 
     const event = await this.eventsRepository.findOne({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
 
-    const hasAccess = Array.isArray(user.accessibleEvents) && user.accessibleEvents.some(e => e.id === event.id);
+    const hasAccess = Array.isArray(user.accessibleEvents) && user.accessibleEvents.some(e => e.id === event.id) || role === UserRole.SUPERADMIN;
     if (!hasAccess) {
       throw new NotFoundException('Event not accessible for this user');
     }

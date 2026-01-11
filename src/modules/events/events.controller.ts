@@ -26,7 +26,9 @@ export class EventsController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get all events' })
+  @ApiBearerAuth()
   @ApiResponse({ status: 200, description: 'List of events', type: [ Events ] })
   public async findAll(): Promise<Events[]> {
     return this.eventsService.findAll();
@@ -69,6 +71,7 @@ export class EventsController {
     @Body() dto: SelectEventDto,
   ): Promise<void> {
     const userId = req?.user['id'];
-    await this.eventsService.selectEvent(userId, dto.id);
+    const role = req?.user['role'];
+    await this.eventsService.selectEvent(role, userId, dto.id);
   }
 }

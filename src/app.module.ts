@@ -10,7 +10,6 @@ import { EventLegendInstances } from './entities/event-legend-instances.entity';
 import { EventPlanners } from './entities/event-planners.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-// (unused imports removed)
 
 const ENTITIES = [
   Users,

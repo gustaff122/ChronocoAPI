@@ -13,9 +13,6 @@ export class AuthController {
   constructor(private authService: AuthService) {
   }
 
-  // Publiczna rejestracja wyłączona zgodnie z wytycznymi
-
-
   @Post('login')
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
@@ -49,7 +46,7 @@ export class AuthController {
     return this.authService.findOneByIdWithoutPassword(userId);
   }
 
-  @Post('refresh')
+  @Get('refresh')
   @ApiOkResponse({ description: 'Access token refreshed.', type: UserResponse })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   public async refresh(
