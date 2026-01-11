@@ -33,7 +33,7 @@ jobs:
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_PORT }}
           source: |
-            dist
+            dist/**
             package.json
             package-lock.json
           target: "/home/kakkoii/apps/chronoco-backend"
