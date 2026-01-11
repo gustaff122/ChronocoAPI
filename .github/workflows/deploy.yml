@@ -32,7 +32,10 @@ jobs:
           username: ${{ secrets.MIKRUS_USER }}
           key: ${{ secrets.MIKRUS_SSH_KEY }}
           port: ${{ secrets.MIKRUS_PORT }}
-          source: "dist/*"
+          source: |
+            dist
+            package.json
+            package-lock.json
           target: "/home/kakkoii/apps/chronoco-backend"
 
       - name: Create .env on server
