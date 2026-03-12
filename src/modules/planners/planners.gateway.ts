@@ -27,7 +27,6 @@ export class PlannersGateway implements OnGatewayDisconnect {
   ) {
   }
 
-  // === JOIN / LEAVE ===
   @UseGuards(JwtAuthGuard)
   @SubscribeMessage(PlannersClientMessages.JOIN_PLANNER)
   async handleJoin(
@@ -43,24 +42,24 @@ export class PlannersGateway implements OnGatewayDisconnect {
     const planner = await this.planningService.getPlanner(eventId);
 
     client.emit(PlannersSocketMessages.PRESENCE_SNAPSHOT, { users, planner });
-    client.to(`event_${eventId}`).emit(PlannersSocketMessages.USER_JOINED, { users });
+    client.broadcast.to(`event_${eventId}`).emit(PlannersSocketMessages.USER_JOINED, { user: user.name });
   }
 
   public handleDisconnect(client: Socket): void {
     const { eventId, user } = client.data ?? {};
     if (!eventId || !user) return;
     this.presenceService.leave(eventId, user);
-    this.server.to(`event_${eventId}`).emit(PlannersSocketMessages.USER_LEFT, { username: user.name });
+    client.broadcast.to(`event_${eventId}`).emit(PlannersSocketMessages.USER_LEFT, { username: user.name });
   }
 
   @UseGuards(JwtAuthGuard)
   @SubscribeMessage(PlannersClientMessages.ADD_INSTANCE)
   async handleAddInstance(
-    @MessageBody() { eventId, instance }: { eventId: string; instance: Partial<EventLegendInstances> },
-    @ConnectedSocket() _client: Socket,
+    @MessageBody() { instance }: { instance: Partial<EventLegendInstances> },
+    @ConnectedSocket() client: Socket,
   ) {
-    const savedInstance = await this.planningService.addInstance(eventId, instance);
-    this.server.to(`event_${eventId}`).emit(PlannersSocketMessages.INSTANCE_ADDED, savedInstance);
+    const savedInstance = await this.planningService.addInstance(client.data.eventId, instance);
+    client.broadcast.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.INSTANCE_ADDED, savedInstance);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -70,7 +69,11 @@ export class PlannersGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     const updated = await this.planningService.updateInstance(id, changes);
-    this.server.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.INSTANCE_UPDATED, updated);
+    client.broadcast
+      .to(`event_${client.data.eventId}`)
+      .emit(PlannersSocketMessages.INSTANCE_UPDATED, {
+        updated,
+      });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -80,17 +83,17 @@ export class PlannersGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     await this.planningService.removeInstance(id);
-    this.server.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.INSTANCE_REMOVED, { id });
+    client.broadcast.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.INSTANCE_REMOVED, { id });
   }
 
   @UseGuards(JwtAuthGuard)
   @SubscribeMessage(PlannersClientMessages.ADD_LEGEND)
   async handleAddLegend(
-    @MessageBody() { eventId, legend }: { eventId: string; legend: Partial<EventLegends> },
-    @ConnectedSocket() _client: Socket,
+    @MessageBody() { legend }: { legend: Partial<EventLegends> },
+    @ConnectedSocket() client: Socket,
   ) {
-    const savedLegend = await this.planningService.addLegend(eventId, legend);
-    this.server.to(`event_${eventId}`).emit(PlannersSocketMessages.LEGEND_ADDED, savedLegend);
+    const savedLegend = await this.planningService.addLegend(client.data.eventId, legend);
+    client.broadcast.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.LEGEND_ADDED, savedLegend);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -100,7 +103,7 @@ export class PlannersGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     const updated = await this.planningService.updateLegend(id, changes);
-    this.server.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.LEGEND_UPDATED, updated);
+    client.broadcast.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.LEGEND_UPDATED, updated);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -110,6 +113,6 @@ export class PlannersGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     await this.planningService.removeLegend(id);
-    this.server.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.LEGEND_REMOVED, { id });
+    client.broadcast.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.LEGEND_REMOVED, { id });
   }
 }

@@ -36,6 +36,7 @@ export class PlannersPlanningService {
       planner,
       legend,
     });
+
     return this.legendInstancesRepository.save(instance);
   }
 
@@ -50,14 +51,21 @@ export class PlannersPlanningService {
 
   public async addLegend(eventId: string, dto: Partial<EventLegends>): Promise<EventLegends> {
     const planner = await this.getPlanner(eventId);
-    const legend = this.legendsRepository.create(dto);
-    legend.planner = planner;
 
-    return this.legendsRepository.save(legend);
+    const legend = this.legendsRepository.create({
+      ...dto,
+      planner,
+    });
+
+    const saved = await this.legendsRepository.save(legend);
+
+    return this.legendsRepository.findOne({
+      where: { id: saved.id },
+    });
   }
 
   public async updateLegend(id: string, dto: Partial<EventLegends>): Promise<EventLegends> {
-    await this.legendsRepository.update({ id }, dto);
+    await this.legendsRepository.update(id, dto);
     return this.legendsRepository.findOne({ where: { id } });
   }
 

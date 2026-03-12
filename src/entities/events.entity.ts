@@ -47,6 +47,8 @@ export class Events {
 
   @BeforeInsert()
   generateId() {
-    this.id = ulid();
+    if (!this.id) {
+      this.id = ulid();
+    }
   }
 }

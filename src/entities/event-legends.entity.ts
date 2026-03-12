@@ -22,11 +22,13 @@ export class EventLegends {
   @ManyToOne(() => EventPlanners, planner => planner.legends, { nullable: false, onDelete: 'CASCADE' })
   planner: EventPlanners;
 
-  @OneToMany(() => EventLegendInstances, instance => instance.legend, { cascade: true })
+  @OneToMany(() => EventLegendInstances, instance => instance.legend, { cascade: true, onDelete: 'CASCADE' })
   instances: EventLegendInstances[];
 
   @BeforeInsert()
   generateId() {
-    this.id = ulid();
+    if (!this.id) {
+      this.id = ulid();
+    }
   }
 }

@@ -18,6 +18,8 @@ export class EventPlanners {
 
   @BeforeInsert()
   generateId() {
-    this.id = ulid();
+    if (!this.id) {
+      this.id = ulid();
+    }
   }
 }

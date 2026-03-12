@@ -6,8 +6,8 @@ import { ulid } from 'ulid';
 
 @Entity()
 export class EventLegendInstances {
-  @ApiProperty({ description: 'Unique ULID identifier', example: '01J8H4ZX5Y7R7E2JZP4D2N9Q2M' })
-  @PrimaryColumn('char', { length: 26 })
+  @ApiProperty({ description: 'Unique ULID identifier', example: 'instance-01J8H4ZX5Y7R7E2JZP4D2N9Q2M' })
+  @PrimaryColumn('char', { length: 34 })
   public id: string;
 
   @ApiProperty({ example: [ 'roomA', 'roomB' ], description: 'Rooms where instance takes place' })
@@ -29,11 +29,13 @@ export class EventLegendInstances {
   @ManyToOne(() => EventPlanners, planner => planner.instances, { onDelete: 'CASCADE' })
   planner: EventPlanners;
 
-  @ManyToOne(() => EventLegends, legend => legend.instances, { eager: true })
+  @ManyToOne(() => EventLegends, legend => legend.instances, { eager: true, onDelete: 'CASCADE' })
   legend: EventLegends;
 
   @BeforeInsert()
   generateId() {
-    this.id = ulid();
+    if (!this.id) {
+      this.id = ulid();
+    }
   }
 }
