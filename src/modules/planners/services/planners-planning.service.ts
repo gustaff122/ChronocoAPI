@@ -27,12 +27,36 @@ export class PlannersPlanningService {
     return event.planner;
   }
 
-  public async addInstance(eventId: string, dto: Partial<EventLegendInstances>): Promise<EventLegendInstances> {
+  public async addInstance(
+    eventId: string,
+    instanceDto: Partial<EventLegendInstances>,
+    legendDto?: Partial<EventLegends>,
+  ): Promise<EventLegendInstances> {
     const planner = await this.getPlanner(eventId);
-    const legend = await this.legendsRepository.findOneOrFail({ where: { id: dto.legend.id } });
+
+    let legend: EventLegends | null = null;
+
+    if (instanceDto.legend?.id) {
+      legend = await this.legendsRepository.findOne({
+        where: { id: instanceDto.legend.id },
+      });
+    }
+
+    if (!legend) {
+      if (!legendDto) {
+        throw new Error('Legend data required to create legend');
+      }
+
+      legend = this.legendsRepository.create({
+        ...legendDto,
+        planner,
+      });
+
+      legend = await this.legendsRepository.save(legend);
+    }
 
     const instance = this.legendInstancesRepository.create({
-      ...dto,
+      ...instanceDto,
       planner,
       legend,
     });

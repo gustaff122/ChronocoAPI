@@ -40,7 +40,6 @@ jobs:
           username: ${{ secrets.HOST_USER }}
           key: ${{ secrets.HOST_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/priv:chronoco-api
-            docker stop chronoco-api || true
-            docker rm chronoco-api || true
-            docker run -d --name chronoco-api -p 3214:3214 ${{ secrets.DOCKER_USERNAME }}/priv:chronoco-api
+            cd ~/chronoco
+            docker compose pull
+            docker compose up -d

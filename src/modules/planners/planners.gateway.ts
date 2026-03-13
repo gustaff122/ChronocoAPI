@@ -55,11 +55,18 @@ export class PlannersGateway implements OnGatewayDisconnect {
   @UseGuards(JwtAuthGuard)
   @SubscribeMessage(PlannersClientMessages.ADD_INSTANCE)
   async handleAddInstance(
-    @MessageBody() { instance }: { instance: Partial<EventLegendInstances> },
+    @MessageBody() { instance, legend }: { instance: Partial<EventLegendInstances>; legend?: Partial<EventLegends> },
     @ConnectedSocket() client: Socket,
   ) {
-    const savedInstance = await this.planningService.addInstance(client.data.eventId, instance);
-    client.broadcast.to(`event_${client.data.eventId}`).emit(PlannersSocketMessages.INSTANCE_ADDED, savedInstance);
+    const savedInstance = await this.planningService.addInstance(
+      client.data.eventId,
+      instance,
+      legend,
+    );
+
+    client.broadcast
+      .to(`event_${client.data.eventId}`)
+      .emit(PlannersSocketMessages.INSTANCE_ADDED, savedInstance);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -68,12 +75,14 @@ export class PlannersGateway implements OnGatewayDisconnect {
     @MessageBody() { id, changes }: { id: string; changes: Partial<EventLegendInstances> },
     @ConnectedSocket() client: Socket,
   ) {
-    const updated = await this.planningService.updateInstance(id, changes);
-    client.broadcast
-      .to(`event_${client.data.eventId}`)
-      .emit(PlannersSocketMessages.INSTANCE_UPDATED, {
-        updated,
-      });
+    if (changes?.legend?.id) {
+      const updated = await this.planningService.updateInstance(id, changes);
+      client.broadcast
+        .to(`event_${client.data.eventId}`)
+        .emit(PlannersSocketMessages.INSTANCE_UPDATED, {
+          updated,
+        });
+    }
   }
 
   @UseGuards(JwtAuthGuard)
